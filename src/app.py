@@ -62,6 +62,8 @@ try:
 except FileNotFoundError:
     df_ocupaciones = pd.read_csv("ocupaciones_top.csv")
     
+df_ocupaciones.columns = df_ocupaciones.columns.str.strip().str.lower()    
+    
 top_ocupaciones = df_ocupaciones["occupation"].tolist()
 
 def recomendar_mejoras(profile, threshold_top=0.80, threshold_mid=0.60):
