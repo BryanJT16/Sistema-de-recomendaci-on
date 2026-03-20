@@ -9,6 +9,7 @@ try:
 except FileNotFoundError:
     model = load(open("modelo_recomendacion.sav", "rb"))
 
+
 age = st.slider("Edad", min_value=0, max_value=100, value=25)
 education = st.selectbox(
     "Educación", 
