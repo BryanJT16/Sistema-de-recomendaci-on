@@ -4,7 +4,7 @@ from pickle import load
 
 st.title("Ingresos futuros según la Data")
 
-model = load(open("modelo_recomendacion.sav", "rb"))
+model = load(open("src/modelo_recomendacion.sav", "rb"))
 
 age = st.slider("Edad", min_value=0, max_value=100, value=25)
 education = st.selectbox(
@@ -42,7 +42,7 @@ sex = st.selectbox("Sexo", ("Male", "Female"))
 native_country = st.selectbox("País de Origen", ["United-States", "Cambodia", "England", "Puerto-Rico", "Canada", "Germany", "Outlying-US(Guam-USVI-etc)", "India", "Japan", "Greece", "South", "China", "Cuba", "Iran", "Honduras", "Philippines", "Italy", "Poland", "Jamaica", "Vietnam", "Mexico", "Portugal", "Ireland", "France", "Dominican-Republic", "Laos", "Ecuador", "Taiwan", "Haiti", "Columbia", "Hungary", "Guatemala", "Nicaragua", "Scotland", "Thailand", "Yugoslavia", "El-Salvador", "Trinadad&Tobago", "Peru", "Hong", "Holand-Netherlands"])
 
 
-df_mapping = pd.read_csv("education_mapping.csv")
+df_mapping = pd.read_csv("src/education_mapping.csv")
 education_dict = dict(zip(df_mapping["education"], df_mapping["education-num"]))
 
 
@@ -50,51 +50,71 @@ education_num = education_dict[education]
 
 row = [[age, education_num, capital_gain, capital_loss, hours_per_week, workclass, marital_status, occupation, relationship, race, sex, native_country]]
 
+df_ocupaciones = pd.read_csv("src/ocupaciones_top.csv")
+top_ocupaciones = df_ocupaciones["occupation"].tolist()
 
 def recomendar_mejoras(profile, threshold_top=0.80, threshold_mid=0.60):
     df_profile = pd.DataFrame([profile])
     prob = model.predict_proba(df_profile)[0, 1]
-    
-    salida = ""
-    salida += f"Probabilidad actual: {prob * 100:.2f}%\n"
-    
+
+    salida = f"Probabilidad actual: {prob * 100:.2f}%\n"
+
     if prob >= threshold_top:
-        salida += ("✔ Alta probabilidad: ya tienes un perfil favorable")
+        salida += "✔ Alta probabilidad: ya tienes un perfil favorable\n"
     elif prob >= threshold_mid:
-        salida += ("- Probabilidad media: podrías mejorar en algunos aspectos")
+        salida += "- Probabilidad media: podrías mejorar en algunos aspectos\n"
     else:
-        salida += ("✖ Baja probabilidad: necesitas mejoras para superar los 50K")
-    
+        salida += "✖ Baja probabilidad: necesitas mejoras para superar los 50K\n"
+
     salida += "\nRecomendaciones:\n"
 
-    
-    # Aumentar educación
+    # Educación
     if profile["education-num"] < 16:
-        diferencia = 16 - profile["education-num"]
         perfil_mejorado = profile.copy()
-        perfil_mejorado["education-num"] += diferencia # Simula obtener un título universitario
-        
-        prob_mejorada = model.predict_proba(pd.DataFrame([perfil_mejorado]))[0, 1]
-        salida += f"- Aumentar educación a nivel universitario: probabilidad = {prob_mejorada*100:.2f}%\n"
-    
-    # Aumentar horas trabajadas
-    if profile["hours-per-week"] < 40:
-        diferencia = 40 - profile["hours-per-week"]
-        perfil_mejorado = profile.copy()
-        perfil_mejorado["hours-per-week"] += diferencia # Simula trabajar 40 horas/semana
+        perfil_mejorado["education-num"] = 16
 
         prob_mejorada = model.predict_proba(pd.DataFrame([perfil_mejorado]))[0, 1]
-        salida += f"- Trabajar hasta 40 horas semanales: probabilidad = {prob_mejorada*100:.2f}%\n"
-    
-    # Cambiar a ocupación ejecutiva 
-    if profile["occupation"] != "Exec-managerial":
-        ocupacion = profile["occupation"]
+
+        if prob_mejorada > prob:
+            salida += f"- Aumentar educación a nivel universitario → {prob_mejorada*100:.2f}%\n"
+
+    # Horas
+    if profile["hours-per-week"] < 40:
         perfil_mejorado = profile.copy()
-        perfil_mejorado["occupation"] = "Exec-managerial"
+        perfil_mejorado["hours-per-week"] = 40
+
         prob_mejorada = model.predict_proba(pd.DataFrame([perfil_mejorado]))[0, 1]
-        salida += f"- Cambiar de {ocupacion} a ocupación ejecutiva: probabilidad = {prob_mejorada*100:.2f}%\n"
-    
-    st.text_area("Resultados y recomendaciones", value=salida, height=300)
+
+        if prob_mejorada > prob:
+            salida += f"- Trabajar hasta 40 horas → {prob_mejorada*100:.2f}%\n"
+
+    # Ocupaciones
+    ocupacion_actual = profile["occupation"]
+
+    mejoras_ocupacion = []
+
+    for ocupacion_top in top_ocupaciones:
+        if ocupacion_top == ocupacion_actual:
+            continue
+
+        perfil_mejorado = profile.copy()
+        perfil_mejorado["occupation"] = ocupacion_top
+
+        prob_mejorada = model.predict_proba(pd.DataFrame([perfil_mejorado]))[0, 1]
+
+        if prob_mejorada > prob:
+            mejoras_ocupacion.append((ocupacion_top, prob_mejorada))
+
+    # Ordenar por impacto
+    mejoras_ocupacion.sort(key=lambda x: x[1], reverse=True)
+
+    for ocupacion_top, prob_mejorada in mejoras_ocupacion:
+        salida += f"- Cambiar a {ocupacion_top} → {prob_mejorada*100:.2f}%\n"
+
+    if not mejoras_ocupacion:
+        salida += "✔ Tu ocupación ya es óptima o no mejora con cambios\n"
+
+    st.markdown(f"```\n{salida}\n```")
 
 st.divider()
 
