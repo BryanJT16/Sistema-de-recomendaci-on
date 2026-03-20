@@ -4,7 +4,10 @@ from pickle import load
 
 st.title("Ingresos futuros según la Data")
 
-model = load(open("src/modelo_recomendacion.sav", "rb"))
+try:
+    model = load(open("src/modelo_recomendacion.sav", "rb"))
+except FileNotFoundError:
+    model = load(open("modelo_recomendacion.sav", "rb"))
 
 age = st.slider("Edad", min_value=0, max_value=100, value=25)
 education = st.selectbox(
@@ -42,7 +45,11 @@ sex = st.selectbox("Sexo", ("Male", "Female"))
 native_country = st.selectbox("País de Origen", ["United-States", "Cambodia", "England", "Puerto-Rico", "Canada", "Germany", "Outlying-US(Guam-USVI-etc)", "India", "Japan", "Greece", "South", "China", "Cuba", "Iran", "Honduras", "Philippines", "Italy", "Poland", "Jamaica", "Vietnam", "Mexico", "Portugal", "Ireland", "France", "Dominican-Republic", "Laos", "Ecuador", "Taiwan", "Haiti", "Columbia", "Hungary", "Guatemala", "Nicaragua", "Scotland", "Thailand", "Yugoslavia", "El-Salvador", "Trinadad&Tobago", "Peru", "Hong", "Holand-Netherlands"])
 
 
-df_mapping = pd.read_csv("src/education_mapping.csv")
+try:
+    df_mapping = pd.read_csv("src/education_mapping.csv")
+except FileNotFoundError:
+    df_mapping = pd.read_csv("education_mapping.csv")
+    
 education_dict = dict(zip(df_mapping["education"], df_mapping["education-num"]))
 
 
@@ -50,7 +57,11 @@ education_num = education_dict[education]
 
 row = [[age, education_num, capital_gain, capital_loss, hours_per_week, workclass, marital_status, occupation, relationship, race, sex, native_country]]
 
-df_ocupaciones = pd.read_csv("src/ocupaciones_top.csv")
+try:
+    df_ocupaciones = pd.read_csv("src/ocupaciones_top.csv")
+except FileNotFoundError:
+    df_ocupaciones = pd.read_csv("education_mapping.csv")
+    
 top_ocupaciones = df_ocupaciones["occupation"].tolist()
 
 def recomendar_mejoras(profile, threshold_top=0.80, threshold_mid=0.60):

@@ -84,8 +84,6 @@ En lugar de solo predecir, el sistema responde:
 
 ---
 
----
-
 ### 🔍 Ejemplo
 
 - Aumentar educación → mejora la probabilidad  
