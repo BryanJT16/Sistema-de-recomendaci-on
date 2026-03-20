@@ -60,7 +60,7 @@ row = [[age, education_num, capital_gain, capital_loss, hours_per_week, workclas
 try:
     df_ocupaciones = pd.read_csv("src/ocupaciones_top.csv")
 except FileNotFoundError:
-    df_ocupaciones = pd.read_csv("education_mapping.csv")
+    df_ocupaciones = pd.read_csv("ocupaciones_top.csv")
     
 top_ocupaciones = df_ocupaciones["occupation"].tolist()
 
